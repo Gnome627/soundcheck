@@ -1,6 +1,7 @@
 import librosa.display
 import matplotlib.pyplot as plt
 import numpy
+import sounddevice
 
 def melsg(signal, sr, show_sg = False):
     mel_spectrogram = librosa.feature.melspectrogram(y=signal, sr=sr)
