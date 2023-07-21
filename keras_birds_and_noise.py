@@ -4,6 +4,9 @@ from glob import glob
 from tensorflow import keras
 import tensorflow as tf
 
+from pyAudioAnalysis import audioBasicIO as aIO
+from pyAudioAnalysis import ShortTermFeatures as aSTF
+
 import numpy as np
 import sounddevice
 import soundfile
@@ -20,12 +23,18 @@ print(sounddevice.query_devices())
 default_devices = 1, 3
 rate = 44100
 
-learning_epochs = 128
+learning_epochs = 100
 
 def audio_files_preprocess(audio_files):
     data = []
     shapes = []
     for af in audio_files:
+        # [rt, x] = aIO.read_audio_file(af)
+
+        # D, d_names, F = aSTF.spectrogram(x, rt, rt, rt * 0.25)
+
+        # D, names = aSTF.feature_extraction(x, rt, rt, rt * 0.1)
+
         y, sr = librosa.load(af, sr=rate)
         S = tf.signal.stft(y, frame_length=320, frame_step=32)
         S = tf.abs(S)
@@ -71,16 +80,36 @@ y = np.array(
 
 print(shapes[0])
 
+# model = keras.Sequential([
+#     keras.layers.Flatten(input_shape=(shapes[0])),
+#     keras.layers.Dense(128, activation='relu'),
+#     keras.layers.Dense(len(classes), activation='softmax')
+# ])
+
 model = keras.Sequential([
     keras.layers.Flatten(input_shape=(shapes[0])),
-    keras.layers.Dense(96, activation='relu'),
+    # keras.layers.Dense(1048576, activation='sigmoid'),
+    # keras.layers.Dense(262144, activation='sigmoid'),
+    # keras.layers.Dense(65536, activation='sigmoid'),
+    keras.layers.Dense(16384, activation='sigmoid'),
+    keras.layers.Dense(4096, activation='sigmoid'),
+    keras.layers.Dense(1024, activation='sigmoid'),
+    keras.layers.Dense(256, activation='sigmoid'),
+    keras.layers.Dense(128, activation='sigmoid'),
+    keras.layers.Dense(64, activation='sigmoid'),
+    keras.layers.Dense(32, activation='sigmoid'),
+    keras.layers.Dense(16, activation='sigmoid'),
     keras.layers.Dense(len(classes), activation='softmax')
 ])
 
-model.compile(optimizer=tf.keras.optimizers.SGD(), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.compile(
+    optimizer=tf.keras.optimizers.SGD(),
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+    )
 model.summary()
 
-model.fit(x, y, epochs=learning_epochs)
+model.fit(x, y, epochs=learning_epochs, batch_size=64)
 
 test_loss, test_acc = model.evaluate(x, y)
 print('Test accuracy: ', test_acc)
