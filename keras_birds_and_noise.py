@@ -38,8 +38,8 @@ def audio_files_preprocess(audio_files):
         y, sr = librosa.load(af, sr=rate)
         S = tf.signal.stft(y, frame_length=320, frame_step=32)
         S = tf.abs(S)
-        # D = librosa.feature.spectral_contrast(y=y, sr=sr)
-        D = tf.expand_dims(S, axis=2)
+        D = librosa.feature.spectral_contrast(y=y, sr=sr)
+        # D = tf.expand_dims(S, axis=2)
         shape = D.shape
         data.append(D)
         shapes.append(shape)
@@ -88,18 +88,15 @@ print(shapes[0])
 
 model = keras.Sequential([
     keras.layers.Flatten(input_shape=(shapes[0])),
-    # keras.layers.Dense(1048576, activation='sigmoid'),
-    # keras.layers.Dense(262144, activation='sigmoid'),
-    # keras.layers.Dense(65536, activation='sigmoid'),
-    keras.layers.Dense(16384, activation='sigmoid'),
-    keras.layers.Dense(4096, activation='sigmoid'),
-    keras.layers.Dense(1024, activation='sigmoid'),
-    keras.layers.Dense(256, activation='sigmoid'),
-    keras.layers.Dense(128, activation='sigmoid'),
-    keras.layers.Dense(64, activation='sigmoid'),
-    keras.layers.Dense(32, activation='sigmoid'),
-    keras.layers.Dense(16, activation='sigmoid'),
-    keras.layers.Dense(len(classes), activation='softmax')
+    keras.layers.Dense(2048, activation='leaky_relu'),
+    keras.layers.Dense(1024, activation='leaky_relu'),
+    keras.layers.Dense(512, activation='leaky_relu'),
+    keras.layers.Dense(256, activation='leaky_relu'),
+    keras.layers.Dense(64, activation='relu'),
+    keras.layers.Dense(32, activation='relu'),
+    keras.layers.Dense(16, activation='relu'),
+    keras.layers.Dense(8, activation='relu'),
+    keras.layers.Dense(len(classes), activation='sigmoid')
 ])
 
 model.compile(
@@ -109,7 +106,7 @@ model.compile(
     )
 model.summary()
 
-model.fit(x, y, epochs=learning_epochs, batch_size=64)
+model.fit(x, y, epochs=learning_epochs, batch_size=8)
 
 test_loss, test_acc = model.evaluate(x, y)
 print('Test accuracy: ', test_acc)
